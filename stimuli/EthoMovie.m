@@ -1,4 +1,4 @@
-classdef MovieGKA < handle
+classdef EthoMovie < handle
     properties
         % Externally mutable properties
         position       = []; % l,t,r,b rectangle on the screen
@@ -6,20 +6,20 @@ classdef MovieGKA < handle
         volume         = 1;
         interframeFunc = []; % Function to execute between frames
     end
-    
+
     properties (Dependent, Transient)
         % Mutable playback properties
         timeIndex;
         frameIndex;
     end
-    
+
     properties (SetAccess = private, Transient = true)
         % Read-only pointers for PTB Screen functions
         scnWinPtr = []; % Pointer to window for drawing
         scnMovPtr = []; % Pointer to movie
     end
-    
-    
+
+
     properties (SetAccess = private)
         % Immutable properties describing movie
         filename   = ''; % Movie file
@@ -27,23 +27,23 @@ classdef MovieGKA < handle
         fps        = 0;  % Frame rate
         nativeSize = []; % Native resolution of the movie, as a two-element
                          % width,height vector (in pixels)
-        
+
         % Read-only properties describing playback history
         frameHistory   = []; % A list of the time indices of all frames
                              % that were drawn during this movie's playback
         drawTimes      = []; % A list of PTB's timestamps for all frame
                              % drawing events during this movie's playback
         interframeData = {}; % A list of return values from interframeFunc
-        
+
         % Read-only properties describing playback
         isPlaying = false;
     end
-    
+
     methods
-        function obj = MovieGKA(filename, varargin)
-% MovieGKA   Wrapper class for PTB movie playback
+        function obj = EthoMovie(filename, varargin)
+% EthoMovie   Wrapper class for PTB movie playback
 % Constructor:
-%   movie = MovieGKA(filename, 'Parameter', value, ...)
+%   movie = EthoMovie(filename, 'Parameter', value, ...)
 %     Valid parameters are:
 %     'Position':       Where on the screen to draw the movie images. Valid
 %                       options are:
@@ -74,7 +74,7 @@ classdef MovieGKA < handle
 % the interframe function when called after the k'th frame drawing. movie
 % is a handle to the player, allowing the interframe function to access and
 % modify the movie player, to, for example, change the playback rate.
-% 
+%
 % Mutable properties:
 %     position:        A four element vector describing the
 %                      [left,top,bottom,right] rectangle in which the movie
@@ -134,7 +134,7 @@ classdef MovieGKA < handle
 %                      historical read-only properites can still be
 %                      accessed.
             p = inputParser;
-            p.FunctionName = 'MovieGKA';
+            p.FunctionName = 'EthoMovie';
             p.addParamValue('Position', 'center');
             p.addParamValue('PlayRate', 1);
             p.addParamValue('SoundVolume', 1);
@@ -142,7 +142,7 @@ classdef MovieGKA < handle
                 @(x)(isempty(x) || isa(x,'function_handle')) );
             p.addParamValue('Window', 'auto');
             p.parse(varargin{:});
-            
+
             if ischar(p.Results.Window)
                 switch p.Results.Window
                     case 'auto'
@@ -151,28 +151,28 @@ classdef MovieGKA < handle
                         if isscalar(winPtr)
                             obj.scnWinPtr = winPtr;
                         elseif isempty(winPtr)
-                            error('MovieGKA:noWindows', ['No window ' ...
+                            error('EthoMovie:noWindows', ['No window ' ...
                                 'currently open for movie display.']);
                         else
-                            error('MovieGKA:windowPointer', ['Unable ' ...
+                            error('EthoMovie:windowPointer', ['Unable ' ...
                                 'to determine display window ' ...
                                 'automatically.']);
                         end
                     case 'none'
                         % Create an invalid movie player
                     otherwise
-                        error('MovieGKA:badParameter', ...
+                        error('EthoMovie:badParameter', ...
                             'Invalid option for "Window"');
                 end
             else
                 obj.scnWinPtr = p.Results.Window;
             end
-            
+
             obj.filename = filename;
             [obj.scnMovPtr, obj.duration, obj.fps, width, height] = ...
                 Screen('OpenMovie', winPtr, filename);
             obj.nativeSize = [width height];
-            
+
             if ischar(p.Results.Position)
                 switch p.Results.Position
                     case 'fullscreen'
@@ -182,7 +182,7 @@ classdef MovieGKA < handle
                     case 'center'
                         obj.Center;
                     otherwise
-                        error('MovieGKA:badParameter', ...
+                        error('EthoMovie:badParameter', ...
                             'Invalid option for "Position"');
                 end
             else
@@ -192,7 +192,7 @@ classdef MovieGKA < handle
             obj.volume = p.Results.SoundVolume;
             obj.interframeFunc = p.Results.InterframeFunc;
         end
-        
+
         function Fullscreen(obj)
             if isempty(obj.scnWinPtr)
                 return;
@@ -205,7 +205,7 @@ classdef MovieGKA < handle
             movieRect = floor([-movieSize movieSize] / 2);
             obj.position = movieRect + [center center];
         end
-        
+
         function Center(obj)
             if isempty(obj.scnWinPtr)
                 return;
@@ -216,7 +216,7 @@ classdef MovieGKA < handle
             shift = winCenter - movCenter;
             obj.position = [0 0 obj.nativeSize] + [shift shift];
         end
-        
+
         function Stretch(obj)
             if isempty(obj.scnWinPtr)
                 return;
@@ -224,12 +224,12 @@ classdef MovieGKA < handle
             winRect = Screen('Rect', obj.scnWinPtr);
             obj.position = winRect;
         end
-        
+
 % %         function Play(obj, clip)
 % %             if obj.isPlaying
 % %                 Screen('PlayMovie', obj.scnMovPtr, 0);
 % %                 obj.isPlaying = false;
-% %                 error('MovieGKA:alreadyPlaying', ...
+% %                 error('EthoMovie:alreadyPlaying', ...
 % %                     'Movie was already playing!');
 % %             end
 % %             if obj.rate == 0
@@ -252,7 +252,7 @@ classdef MovieGKA < handle
 % %                 Screen('SetMovieTimeIndex', obj.scnMovPtr, clip(1));
 % %                 stopTime = clip(2);
 % %             end
-% %             
+% %
 % %             Screen('PlayMovie', obj.scnMovPtr, obj.rate, 0, obj.volume);
 % %             while obj.rate ~= 0
 % %                 [texPtr, nextFrameTime] = Screen('GetMovieImage', ...
@@ -272,7 +272,7 @@ classdef MovieGKA < handle
 % %                 Screen('Close', texPtr);
 % %                 obj.frameHistory(end+1) = nextFrameTime;
 % %                 obj.drawTimes(end+1) = drawTime;
-% %                 
+% %
 % %                 if ~isempty(obj.interframeFunc)
 % %                     [abort, newData] = obj.interframeFunc(obj);
 % %                     obj.interframeData{end+1} = newData;
@@ -283,12 +283,12 @@ classdef MovieGKA < handle
 % %             end
 % %             Screen('PlayMovie', obj.scnMovPtr, 0);
 % %         end
-% %         
+% %
         function Play2(obj, clip)
             if obj.isPlaying
                 Screen('PlayMovie', obj.scnMovPtr, 0);
                 obj.isPlaying = false;
-                error('MovieGKA:alreadyPlaying', ...
+                error('EthoMovie:alreadyPlaying', ...
                     'Movie was already playing!');
             end
             if obj.rate == 0
@@ -315,7 +315,7 @@ classdef MovieGKA < handle
 
             screenData = Screen('Resolution', obj.scnWinPtr);
             halfUpdate = 0.5/screenData.hz;
-            
+
             % For improved performance here, Play2 will ignore rate and
             % volume.  Playback rate is 1, volume is 0.
             %Screen('PlayMovie', obj.scnMovPtr, obj.rate, 0, obj.volume);
@@ -349,7 +349,7 @@ classdef MovieGKA < handle
                 obj.drawTimes(end+1) = drawTime;
             end
         end
-        
+
         function hist = GetHistory(obj)
             hist.filename = obj.filename;
             hist.duration = obj.duration;
@@ -359,57 +359,57 @@ classdef MovieGKA < handle
             hist.drawTimes = obj.drawTimes;
             hist.interframeData = obj.interframeData;
         end
-        
+
         function ClearHistory(obj)
             obj.frameHistory = [];
             obj.drawTimes = [];
             obj.interframeData = {};
         end
-        
+
         function time = get.timeIndex(obj)
             time = Screen('GetMovieTimeIndex', obj.scnMovPtr);
         end
-        
+
         function set.timeIndex(obj, time)
             Screen('SetMovieTimeIndex', obj.scnMovPtr, time);
         end
-        
+
         function frameInd = get.frameIndex(obj)
             time = Screen('GetMovieTimeIndex', obj.scnMovPtr);
             frameInd = round(time * obj.fps);
         end
-        
+
         function set.frameIndex(obj, frameInd)
             time = (frameInd - 0.5) / obj.fps;
             Screen('SetMovieTimeIndex', obj.scnMovPtr, time);
         end
-        
+
         function set.rate(obj, newRate)
             obj.rate = newRate;
             if obj.isPlaying
                 Screen('PlayMovie', obj.scnMovPtr, newRate);
             end
         end
-        
+
         function set.volume(obj, newVolume)
             obj.volume = newVolume;
             if obj.isPlaying
                 Screen('PlayMovie', obj.scnMovPtr, obj.rate, 0, newVolume);
             end
         end
-        
+
         function [frameTexPtr, timeIndex] = GetCurrentFrame(obj)
             [frameTexPtr, timeIndex] = ...
                 Screen('GetMovieImage', obj.scnWinPtr, obj.scnMovPtr);
         end
-        
+
         function Close(obj)
             try %#ok<TRYNC>
                 Screen('CloseMovie', obj.scnMovPtr);
             end
             obj.scnMovPtr = [];
         end
-        
+
         function delete(obj)
             obj.Close;
         end

@@ -1,15 +1,15 @@
-function KbControlGKA(cmd)
-% KbControlGKA   General setup controller for getting key presses
+function EthoKeyboard(cmd)
+% EthoKeyboard   General setup controller for getting key presses
 % Usage:
-%     KbControlGKA('Start')
+%     EthoKeyboard('Start')
 %         Start listening for key presses
-%     KbControlGKA('Stop')
+%     EthoKeyboard('Stop')
 %         Stop listening for key presses; must be called as many times as
-%         KbControlGKA('Start') has been called
-%     KbControlGKA('Reset')
+%         EthoKeyboard('Start') has been called
+%     EthoKeyboard('Reset')
 %         Stop listening for key presses, irrespective of how many times
-%         KbControlGKA('Start') has been called
-% KbControlGKA calls KbQueueCreate, KbQueueStart, KbQueueStop, and
+%         EthoKeyboard('Start') has been called
+% EthoKeyboard calls KbQueueCreate, KbQueueStart, KbQueueStop, and
 % KbQueueRelease as necessary such that calls to KbQueueCheck between the
 % 'Start' and 'Stop' commands will work. If the 'Start' command is called
 % twice without 'Stop' being called between them, the second call to
@@ -25,12 +25,14 @@ if isempty(callDepth)
     callDepth = 0;
 end
 
+message = EthoMakeMessenger();
+
 switch cmd
     case 'Start'
         if callDepth==0
-            fprintf('%s: Beginning to listen for keypresses.\n', mfilename);
-            fprintf('%s: If your script exits and MATLAB is unresponsive to keypresses,\n', mfilename);
-            fprintf('%s: press CTRL-C or <a href="matlab:KbControlGKA(''Reset'')">click here</a>.\n', mfilename);
+            message('Beginning to listen for keypresses.');
+            message('If your script exits and MATLAB is unresponsive to keypresses,');
+            message('press Ctrl-C or <a href="matlab:EthoKeyboard(''Reset'')">click here</a>.');
             KbName('UnifyKeyNames');
             KbQueueCreate;
             KbQueueStart;
@@ -54,9 +56,6 @@ switch cmd
             KbQueueRelease;
         end
     otherwise
-        warning('KbControlGKA:badCmd', ...
-            'KbControlGKA: Unrecognized command "%s"', cmd);
+        warning('EthoKeyboard:badCmd', ...
+            'EthoKeyboard: Unrecognized command "%s"', cmd);
 end
-
-    
-    
