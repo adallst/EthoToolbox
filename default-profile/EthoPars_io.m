@@ -1,5 +1,5 @@
 function [pars, docs] = EthoPars_io
-
+error('No! Do the other thing!');
 pars.port_name = '';
 docs.port_name = strjoin({
 'The port identifier for the default Arduino-based digital I/O system. Check'

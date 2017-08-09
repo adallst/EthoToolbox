@@ -1,5 +1,10 @@
 function s = prettyprint_columns(list, width)
 
+if isempty(list)
+    s = '';
+    return;
+end
+
 if ~exist('width','var')
     sz = get(0,'CommandWindowSize');
     width = sz(1);

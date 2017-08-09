@@ -1,0 +1,2 @@
+name     id  resX  resY  width  height  subject_distance  subject_elevation  tilt_angle
+screen1  1   1024  768   40.0   30.0    60.0              0.0                0

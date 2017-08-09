@@ -1,0 +1,5 @@
+parameter   value   description
+screen      ''      'The PsychToolbox screen ID to use.'
+width       0       'The width of the display''s viewable area, in cm.'
+height      0       'The height of the display''s viewable area, in cm.'
+distance    0       'The distance from the display to the subject, in cm.'

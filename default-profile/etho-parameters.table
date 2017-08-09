@@ -1,0 +1,3 @@
+parameter       value    description
+default_screen  screen1  'The name of the screen in etho-screens.table to use by default'
+default_io      io1      'The name of the I/O device in etho-io-devices.table to use by default'

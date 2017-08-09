@@ -33,9 +33,8 @@ end
 
 message = EthoMakeMessenger();
 
-profilesDir = EthoPaths('profiles');
-
 if nargin
+    profilesDir = EthoPaths('profiles');
     if any(ismember({'-list','-l'}, varargin))
         % List mode
         s = dir(profilesDir);
