@@ -10,7 +10,7 @@ if ismember('setup', varargin)
     message('Adding EthoToolbox to the path and setting up local info.');
 
     etho_path = etho_genpath(this_dir);
-    path(etho_path, cur_path);
+    addpath(etho_path);
     savepath;
 
     p = EthoPaths;

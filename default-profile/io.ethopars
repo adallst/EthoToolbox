@@ -1,3 +1,0 @@
-parameter   value   description
-port_name   ''      'The port identifier for the Arduino-based I/O system.'
-reward_pin  2       'The digital I/O pin connected to the reward device.'
