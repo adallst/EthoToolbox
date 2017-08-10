@@ -19,29 +19,26 @@ pars = etho_simple_argparser({
 quotePatterns = EthoReformatTable(pars.QuotePatterns, ...
     'FieldNames', {'Open','Close','Escape'});
 
-standardPatterns = {'','',''};
-if pars.SingleQuote
-    if pars.DoubleQuote
-        standardPatterns{1} = '[''"]';
-    else
-        standardPatterns{1} = '''';
+bothQuotes = pars.SingleQuote & pars.DoubleQuote;
+standardQuotePattern = '[''"]';
+
+if pars.SingleQuote || pars.DoubleQuote
+    quotePattern = standardQuotePattern(...
+        [bothQuotes, pars.SingleQuote, pars.DoubleQuote, bothQuotes]);
+    escapePatterns = {};
+    if pars.BackslashEscapes
+        escapePatterns = [escapePatterns, {'\\\1'}];
     end
-    standardPatterns{2} = '\1';
-elseif pars.DoubleQuote
-    standardPatterns{1} = '"';
-    standardPatterns{2} = '\1';
+    if pars.ReduplicationEscapes
+        escapePatterns = [escapePatterns, {'\1\1'}];
+    end
+    escapePattern = strjoin(escapePatterns, '|');
+
+    quotePatterns = [quotePatterns; {quotePattern, '\1', escapePattern}];
 end
-escapePatterns = {};
-if pars.BackslashEscapes
-    escapePatterns(end+1) = {'\\\1'};
-end
-if pars.ReduplicationEscapes
-    escapePatterns(end+1) = {'\1\1'};
-end
-standardPatterns{3} = strjoin(escapePatterns, '|');
 
 if ~isempty(pars.LineCommentPattern)
-
+    quotePatterns = [quotePatterns; {pars.LineCommentPattern, '$|\n', ''}];
 end
 
 % Given an input string text, return a cell array splitting up the text into
