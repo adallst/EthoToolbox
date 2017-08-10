@@ -1,4 +1,29 @@
-function [table, fields] = EthoReformatTable(table, varargin)
+function [table, fields] = ETableConvert(table, varargin)
+% ETableConvert   Convert from one tabular structure to another
+% Usage:
+%   [table, fields] = ETableConvert(table, ['Parameter', value, ...])
+%
+% Converts the input tabular data to a different data structure representing
+% the same data. See `ETable help` for valid data structures.
+% Valid parameters are:
+%   'TableFormat': {'struct' | 'columns' | ['cellarray']}
+%       Specify the desired output format.
+%   'FormatHint': {[''] | 'struct' | 'columns' | 'cellarray'}
+%       Provide a hint for the format of the input data. If no hint is given,
+%       the format will be guessed from the input data structure itself. Often
+%       guessing works fine, but it is not guaranteed to provide the correct
+%       output, so usually a format hint should be provided.
+%   'FieldNames': {cell array of strings}
+%       The field names for the table. If the input is a struct, and FieldNames
+%       is not given, then the input's field names are used.
+%
+% Returns:
+%   table
+%     The converted tabular data.
+%   fields
+%     The field names for the tabular data. If table is a struct, equivalent
+%     to fieldnames(table).
+
 
 % Valid table formats:
 % struct:
@@ -31,14 +56,14 @@ if ~ismember(curFormat, allFormats)
     elseif iscell(table) && ismatrix(table)
         curFormat = 'cellarray';
     else
-        error('Etho:badTableFormat', 'Unknown table format');
+        error('ETable:badFormat', 'Unknown table format');
     end
 end
 [~, curFormatI] = ismember(curFormat, allFormats);
 [isGood, newFormatI] = ismember(newFormat, allFormats);
 
 if ~isGood
-    error('Etho:badTableFormat', 'Unknown table format');
+    error('ETable:badFormat', 'Unknown table format');
 end
 
 % Select the conversion function from the matrix below.

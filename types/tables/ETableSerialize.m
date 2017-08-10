@@ -1,4 +1,4 @@
-function s = EthoSerializeTable(table, varargin)
+function s = ETableSerialize(table, varargin)
 
 pars = etho_simple_argparser({
     'Quote', '''';

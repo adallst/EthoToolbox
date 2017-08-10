@@ -1,6 +1,40 @@
-function [table, fields] = EthoParseTable(s, varargin)
-% Given a string containing tabular data, returns the table.
+function [table, fields] = ETableParse(s, varargin)
+% Parse tabular data from a string
+% Usage:
+%   [table, fields] = ETableParse(s, ['Parameter', value, ...])
 %
+% Given an input string `s` containing tabular data in a standard format
+% (e.g., CSV), return the data in a desired Matlab data structure. Any column in
+% the table for which all values are convertable to numbers will be converted.
+% Otherwise, all values are imported as strings.
+%
+% Valid parameters are:
+%   'FieldNameRow':  {[true] | false}
+%       Whether the first row of the table gives field names instead of data.
+%   'SkipLines':
+%       An integer specifying a number of lines to skip before reading the
+%       table. Default is 0.
+%   'FieldDelimiter':
+%       A regular expression pattern matching the delimiter between fields
+%       within a row. The default value is ',\s*|\s+', meaning that any comma
+%       (optionally followed by whitespace) or whitespace will be treated as a
+%       field delimiter. Delimiters enclosed by quotes are ignored. The default
+%       expression will successfully read most CSV, TSV, or WSV files. Useful
+%       alternatives are:
+%         For "strict" CSV: ','
+%         For TSV:          '\t'
+%         For WSV:          '\s+'
+%         For MySQL output: '\s*\|\s*'
+%   'Quote':
+%       A regular expression giving the pattern that matches a quote. The
+%       default value is '[''"]', meaning that both single quotes ' and double
+%       quotes " are valid quote marks. The closing quote is always the same
+%       as the opening quote.
+%   'EscapeDoubleQuote':
+%   'TableFormat':  {['struct'] | 'cellarray' | 'columns'}
+%   'FieldTypes':
+%   'MissingValues':
+
 
 pars = etho_simple_argparser({
     'FieldNameRow', true;
