@@ -32,7 +32,7 @@ if iscellstr(format_str)
     format_str = strjoin(format_str, ' ');
 end
 message = sprintf(format_str, format_args{:});
-message_lines = etho_wordwrap(message, width, true);
+message_lines = estr_wrap(message, width, true);
 for i = 1:numel(message_lines)
     fprintf('%s: %s\n', pre, message_lines{i});
 end

@@ -11,7 +11,7 @@ pars = etho_simple_argparser({
     'FieldNameRow', true;
     }, varargin);
 
-[table, fields] = EthoReformatTable(table, pars, ...
+[table, fields] = ETableConvert(table, pars, ...
     'TableFormat', 'cellarray');
 
 entryIsNumeric = cellfun(@(t)isnumeric(t)||islogical(t), table);
