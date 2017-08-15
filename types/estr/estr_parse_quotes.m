@@ -3,13 +3,27 @@ function blocks = estr_parse_quotes(text, varargin)
 % Usage:
 %   blocks = estr_parse_quotes(text, ['Parameter', value, ...])
 %
-% Given text containing quoted text, parses the string into quoted and unquoted
-% sections. `blocks` is an N-by-3 cell array of strings, such that blocks{n,1}
-% is the opening quote of the n'th block, blocks{n,2} is the quoted text, and
-% blocks{n,3} is the closing quote text. For an unquoted block, blocks{n,1} and
-% blocks{n,3} are both ''.
+% Given a string containing quoted text, parses the string into quoted and
+% unquoted sections. `blocks` is an N-by-3 cell array of strings, such that
+% blocks{n,1} is the opening quote of the n'th block, blocks{n,2} is the quoted
+% text, and blocks{n,3} is the closing quote text. For an unquoted block,
+% blocks{n,1} and blocks{n,3} are both ''.
 %
-% Valid parameters are:
+% Optional parameters are:
+%   'StandardFlags': set of flags in 'sdbr'
+%       Default is 'sdbr'. The flags have meaning as follows:
+%         s: Use single quotes '
+%         d: Use double quotes "
+%         b: A backslash \ preceding a quote escapes it
+%         r: Reduplication '' of a quote escapes it.
+%   'LineCommentPattern': regular expression
+%       Default is ''. A pattern to match as the start of a line-style comment.
+%   'OpenPatterns': cell array of regular expressions
+%       Each element in the array is a regular expression matching the opening
+%       of one type of quote block.
+%   'ClosePatterns': cell array of regular expressions
+%   'EscapePatterns': cell array of regular expressions
+
 %   'SingleQuote': {[true] | false}
 %   'DoubleQuote': {[true] | false}
 %       Whether single quotes ' or double quotes " should be used as quote
@@ -55,59 +69,88 @@ function blocks = estr_parse_quotes(text, varargin)
 %         (LCP value)   '\n|$'   ''
 
 pars = etho_simple_argparser({
-    'QuotePatterns', struct('Open', {{}}, 'Close', {{}}, 'Escape', {{}}),
-    'SingleQuote', true,
-    'DoubleQuote', true,
-    'BackslashEscapes', true,
-    'ReduplicationEscapes', true,
-    'LineCommentPattern', ''
+    'OpenPatterns',   {};
+    'ClosePatterns',  {};
+    'EscapePatterns', {};
+    'StandardFlags', 'sdbr';
+    'LineCommentPattern', '';
     }, varargin);
 
-quotePatterns = ETableConvert(pars.QuotePatterns, ...
-    'TableFormat', 'cellarray', ...
-    'FieldNames', {'Open','Close','Escape'});
+patTable = etho_struct_subset(pars, ...
+    {'OpenPatterns','ClosePatterns','EscapePatterns'}, ...
+    {'open', 'close', 'escape'} );
 
-bothQuotes = pars.SingleQuote & pars.DoubleQuote;
-standardQuotePattern = '[''"]';
+standardFlags = ismember('sdbr', pars.StandardFlags);
+singleQuote = standardFlags(1);
+doubleQuote = standardFlags(2);
+backslashEscapes = standardFlags(3);
+reduplicationEscapes = standardFlags(4);
 
-if pars.SingleQuote || pars.DoubleQuote
-    quotePattern = standardQuotePattern(...
-        [bothQuotes, pars.SingleQuote, pars.DoubleQuote, bothQuotes]);
-    escapePatterns = {};
-    if pars.BackslashEscapes
-        escapePatterns = [escapePatterns, {'\\\1'}];
-    end
-    if pars.ReduplicationEscapes
-        escapePatterns = [escapePatterns, {'\1\1'}];
-    end
-    escapePattern = strjoin(escapePatterns, '|');
+useStandardStyle = singleQuote || doubleQuote;
+bothQuotes = singleQuote && doubleQuote;
 
-    quotePatterns = [quotePatterns; {quotePattern, '\1', escapePattern}];
+if useStandardStyle
+    % Use one of the standard quotation/escape styles
+    standardOpens = '[''"]';
+    openPattern = ...
+        standardOpens([bothQuotes, singleQuote, doubleQuote, bothQuotes]);
+    closePattern = '\1';
+    standardEscapes = {'\\\1', '\1\1'};
+    escapePattern = strjoin( ...
+        standardEscapes([backslashEscapes, reduplicationEscapes]),
+        '|' );
+    patTable.open(end+1) = {openPattern};
+    patTable.close(end+1) = {closePattern};
+    patTable.escape(end+1) = {escapePattern};
 end
 
 if ~isempty(pars.LineCommentPattern)
-    quotePatterns = [quotePatterns; {pars.LineCommentPattern, '$|\n', ''}];
+    % Use a standard line comment style, with the supplied pattern as the open
+    patTable.open(end+1) = {pars.LineCommentPattern};
+    patTable.close(end+1) = {'\n|$'};
+    patTable.escape(end+1) = {''};
 end
 
-patterns = cell(size(quotePatterns,1),1);
+patterns = cell(size(patTable.open));
 
-for i=1:size(quotePatterns,1)
-    openPattern = quotePatterns{i,1};
-    closePattern = quotePatterns{i,2};
-    escapePattern = quotePatterns{i,3};
-    escapeParts = strsplit(escapePattern,'|');
-    needsLookahead = strncmp(escapeParts, '\1', 2);
-    lookaheadParts = cellfun(@(s)s(3:end), ...
-        escapeParts(needsLookahead);
-    lookaheadPattern = strjoin(lookaheadParts, '|');
+for i = 1:numel(patTable.open)
+    openPattern = patTable.open{i};
+    closePattern = patTable.close{i};
+    escapePattern = patTable.escape{i};
+
+    % Replace all instances of '\1' in the close and escape patterns with
+    % '\1', '\4', '\7', etc.
+    openTokenMetaPattern = '(^|(\\\\)+|[^\\])\\1';
+    openTokenNumber = 3*i - 2;
+    openTokenMetaReplacement = sprintf('$1\\%d', openTokenNumber);
+
+    closePattern = regexprep(closePattern, ...
+        openTokenMetaPattern, openTokenMetaReplacement);
+    escapePattern = regexprep(escapePattern, ...
+        openTokenMetaPattern, openTokenMetaReplacement);
+
+    closeParts = strsplit(closePattern, '|');
+    escapeParts = strsplit(escapePattern, '|');
+
+    % If any escape pattern begins with a pattern that also matches a close
+    % pattern, we need to use negative lookahead to escape it properly.
+    lookaheadParts = repmat({''}, numel(escapeParts), numel(closeParts));
+    needsLookahead = false(size(lookaheadParts));
+    for e_i = 1:numel(escapeParts)
+        for c_i = 1:numel(closeParts)
+            thisEscape = escapeParts{e_i};
+            thisClose = closeParts{c_i};
+            n = numel(thisClose);
+            if strncmp(thisEscape, thisClose, n)
+                lookaheadParts{e_i,c_i} = thisEscape((n+1):end);
+                needsLookahead(e_i,c_i) = true;
+            end
+        end
+    end
+    lookaheadPattern = strjoin(lookaheadParts(needsLookahead), '|');
     if ~isempty(lookaheadPattern)
         lookaheadPattern = sprintf('(?!%s)', lookaheadPattern);
     end
-    openTokenNumber = (i-1)*3 + 1;
-    openTokenMatcher = strcat('\', str2double(openTokenNumber));
-    closePattern = strrep(closePattern, '\1', openTokenMatcher);
-    escapePattern = strrep(escapePattern, '\1', openTokenMatcher);
-    lookaheadPattern = strrep(lookaheadPattern, '\1', openTokenMatcher);
 
     if isempty(escapePattern)
         patterns{i} = sprintf('(%s)(.*?)(%s)', openPattern, closePattern);
@@ -118,7 +161,6 @@ for i=1:size(quotePatterns,1)
 end
 
 pattern = strjoin(patterns, '|');
-
 [tokens, nonquoted] = regexp(text, pattern, 'tokens', 'split');
 % Now `tokens` is a cell array of cell arrays of strings, such that
 % tokens{i}{j} is the j'th token in the i'th match. I.e., for the i'th quoted
@@ -140,38 +182,23 @@ blocks(1:2:end, 2) = nonquoted;
 blocks(1:2:end, 3) = {''};
 
 for i=1:numel(tokens)
-    
-end
+    quoteStyle = find(~cellfun(@isempty, tokens{i}(1:3:end)));
+    [thisOpen, thisBlock, thisClose] = tokens{i}{3*quoteStyle + (-2:0)};
 
-
-% Given an input string text, return a cell array splitting up the text into
-% unquoted and quoted sections. parts(1:2:end) contains the unquoted sections,
-% and parts(2:2:end) contains the quoted sections.
-quote_pattern = pars.Quote;
-escape_pattern = '\\\1';
-if pars.EscapeDoubleQuote
-    escape_pattern = [escape_pattern '|\1\1'];
-    lookahead_pattern = '(?!\1)';
-else
-    lookahead_pattern = '';
-end
-
-pattern = sprintf('(%s)((?:%s|.)*?)\\1%s', ...
-    quote_pattern, escape_pattern, lookahead_pattern);
-
-[tokens, nonquoted] = regexp(text, pattern, 'tokens', 'split');
-tokens = vertcat(tokens{:});
-if isempty(tokens)
-    quoted = {};
-else
-    quotes = tokens(:,1);
-    re_quotes = regexptranslate('escape', quotes);
-    escaped_quotes = strcat('\\', re_quotes);
-    if pars.EscapeDoubleQuote
-        escaped_quotes = strcat(escaped_quotes, '|', re_quotes, re_quotes);
+    % Replace escape patterns, if needed
+    if ~isempty(quotePatterns{quoteStyle,3})
+        escapePattern = regexprep( ...
+            quotePatterns{quoteStyle,3}, ...
+            '\\1', ...
+            regexptranslate('escape', thisOpen) );
+        thisBlock = regexprep(thisBlock, escapePattern, thisClose);
     end
-    quoted = regexprep(tokens(:,2), escaped_quotes, quotes);
+
+    blocks(2*i,:) = {thisOpen, thisBlock, thisClose};
 end
-if isempty(nonquoted{end})
-    nonquoted = nonquoted(1:end-1);
-end
+
+% Remove unquoted blocks containing no text
+preserveBlock = true(size(blocks,1), 1);
+preserveBlock(1:2:end) = ~cellfun(@isempty, nonquoted);
+
+blocks = blocks(preserveBlock,:);

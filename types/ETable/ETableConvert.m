@@ -6,15 +6,15 @@ function [table, fields] = ETableConvert(table, varargin)
 % Converts the input tabular data to a different data structure representing
 % the same data. See `ETable help` for valid data structures.
 % Valid parameters are:
-%   'TableFormat': {'struct' | 'columns' | ['cellarray']}
+%   'TableTypeOut': {'struct' | 'columns' | ['cellarray']}
 %       Specify the desired output format.
-%   'FormatHint': {[''] | 'struct' | 'columns' | 'cellarray'}
+%   'TableTypeIn': {['auto'] | 'struct' | 'columns' | 'cellarray'}
 %       Provide a hint for the format of the input data. If no hint is given,
 %       the format will be guessed from the input data structure itself. Often
 %       guessing works fine, but it is not guaranteed to provide the correct
 %       output, so usually a format hint should be provided.
-%   'FieldNames': {cell array of strings}
-%       The field names for the table. If the input is a struct, and FieldNames
+%   'TableFields': {cell array of strings}
+%       The field names for the table. If the input is a struct, and TableFields
 %       is not given, then the input's field names are used.
 %
 % Returns:
@@ -23,7 +23,6 @@ function [table, fields] = ETableConvert(table, varargin)
 %   fields
 %     The field names for the tabular data. If table is a struct, equivalent
 %     to fieldnames(table).
-
 
 % Valid table formats:
 % struct:
@@ -37,27 +36,24 @@ function [table, fields] = ETableConvert(table, varargin)
 %   row of the i'th column.
 
 pars = etho_simple_argparser({
-    'TableFormat', 'cellarray';
-    'FormatHint', '';
-    'FieldNames', {};
+    'TableTypeOut', 'cellarray';
+    'TableTypeIn', 'auto';
+    'TableFields', {};
     }, varargin);
 
 allFormats = {'struct', 'columns', 'cellarray'};
-curFormat = lower(pars.FormatHint);
-newFormat = lower(pars.TableFormat);
-fields = cellstr(pars.FieldNames);
+curFormat = lower(pars.TableTypeIn);
+newFormat = lower(pars.TableTypeOut);
+fields = cellstr(pars.TableFields);
 
 if ~ismember(curFormat, allFormats)
     % Autodetermine table format
-    if isstruct(table) && isscalar(table)
-        curFormat = 'struct';
-    elseif iscell(table) && isvector(table)
-        curFormat = 'columns';
-    elseif iscell(table) && ismatrix(table)
-        curFormat = 'cellarray';
-    else
-        error('ETable:badFormat', 'Unknown table format');
+    if ~ismember(curFormat, {'auto',''})
+        warning('ETable:badFormat', ...
+            'Unrecognized table format ''%s'', treating as ''auto''', ...
+            curFormat);
     end
+    curFormat = ETableAutoType(table);
 end
 [~, curFormatI] = ismember(curFormat, allFormats);
 [isGood, newFormatI] = ismember(newFormat, allFormats);

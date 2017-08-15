@@ -31,7 +31,7 @@ function [table, fields] = ETableParse(s, varargin)
 %       quotes " are valid quote marks. The closing quote is always the same
 %       as the opening quote.
 %   'EscapeDoubleQuote':
-%   'TableFormat':  {['struct'] | 'cellarray' | 'columns'}
+%   'TableTypeOut':  {['struct'] | 'cellarray' | 'columns'}
 %   'FieldTypes':
 %   'MissingValues':
 
@@ -42,7 +42,7 @@ pars = etho_simple_argparser({
     'FieldDelimiter', ',\s*|\s+';
     'Quote', '[''"]';
     'EscapeDoubleQuote', true;
-    'TableFormat', 'struct';
+    'TableTypeOut', 'struct';
     'FieldTypes', 'auto';
     'MissingValues', {'NA'};
     }, varargin);
@@ -111,7 +111,7 @@ for i=1:numFields
 end
 
 [table, fields] = EthoReformatTable(columns, pars, ...
-    'FormatHint', 'columns', 'FieldNames', fields);
+    'FormatHint', 'columns', 'TableFields', fields);
 
 function vals = parse_row(text, pars)
 

@@ -35,4 +35,4 @@ structArgs(1:2:end) = fields;
 structArgs(2:2:end) = {[]};
 
 table = struct(structArgs{:});
-[table, fields] = ETableConvert(table, 'TableFormat', format)
+[table, fields] = ETableConvert(table, 'TableOutput', format)

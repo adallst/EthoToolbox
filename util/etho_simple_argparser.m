@@ -1,12 +1,36 @@
-function pars = etho_simple_argparser(parameters, args)
+function pars = etho_simple_argparser(defaults, args)
+% Simplified argument parsing for parameter-value pairs
+% Usage:
+%   pars = etho_simple_argparser(defaults, args)
+%     `defaults`
+%         A set of parameter-value default pairs. Can be supplied either as a
+%         scalar struct, as in:
+%           struct('Param1', default1, 'Param2', default2, ...)
+%         or as an N-by-2 cell array, as in:
+%           { 'Param1', default1;
+%             'Param2', default2;
+%             ...                 }
+%     `args`
+%         A cell array of the arguments to parse into parameter-value pairs.
+%         Typically this will just be the `varargin` array. As a notational
+%         convenience, input arguments beginning with - or ~ will be expanded
+%         as:
+%             '-Parameter'    -->    'Parameter', true
+%             '~Parameter'    -->    'Parameter', false
+%     `pars`
+%         A scalar struct containing all the parameter-value pairs from `args`,
+%         with any missing values filled in from `args`. Parameters supplied in
+%         `args` which are not in `defaults` appear normally.
 
-if isstruct(parameters)
-    parameters = [fieldnames(parameters), struct2cell(parameters)];
+if isstruct(defaults)
+    defaults = [fieldnames(defaults), struct2cell(defaults)];
 end
-parameters = parameters';
-parameters = parameters(:);
-paramNames = parameters(1:2:end);
-paramDefaults = parameters(2:2:end);
+defaults = defaults';
+defaults = defaults(:);
+defaultParameters = defaults(1:2:end);
+defaultValues = defaults(2:2:end);
+
+args = expandFlagArguments(args);
 
 % Workaround Octave not implementing inputParser.StructExpand
 verInfo = ver;
@@ -16,8 +40,8 @@ end
 
 p = inputParser;
 p.KeepUnmatched = true;
-for i=1:numel(paramNames)
-    p.addParamValue(paramNames{i}, paramDefaults{i});
+for i=1:numel(defaultParameters)
+    p.addParamValue(defaultParameters{i}, defaultValues{i});
 end
 p.parse(args{:});
 
@@ -31,6 +55,23 @@ all_args = vertcat(struct2cell(results), struct2cell(unmatched));
 all_names = vertcat(result_names, unmatched_names);
 
 pars = cell2struct(all_args, all_names);
+
+function args = expandFlagArguments(args)
+i = 1;
+while i <= numel(args)
+    if ischar(args{i})
+        if args{i}(1) == '-'
+            args{i} = args{i}(2:end);
+            args = [args(1:i); {true}; args(i+1:end)];
+        elseif args{i}(1) == '~'
+            args{i} = args{i}(2:end);
+            args = [args(1:i); {false}; args(i+1:end)];
+        end
+        i = i+2;
+    else
+        i = i+1;
+    end
+end
 
 function fixedArgs = octaveArgFix(args)
 fixedArgs = {};

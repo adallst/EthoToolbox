@@ -7,19 +7,19 @@ pars = etho_simple_argparser({
     'QuoteNeededPattern', '\s|[''",]';
     'QuoteEscapeMethod', 'repeat';
     'AlignColumns', true;
-    'FieldNames', {};
+    'TableFields', {};
     'FieldNameRow', true;
     }, varargin);
 
 [table, fields] = ETableConvert(table, pars, ...
-    'TableFormat', 'cellarray');
+    'TableTypeOut', 'cellarray');
 
 entryIsNumeric = cellfun(@(t)isnumeric(t)||islogical(t), table);
 table(entryIsNumeric) = cellfun(@num2str, table(entryIsNumeric), ...
     'UniformOutput', false);
 
 if ~iscellstr(table)
-    error('EthoSerializeTable:conversionFailed', ...
+    error('ETableSerialize:conversionFailed', ...
         'Unable to convert all data to string');
 end
 
@@ -36,7 +36,7 @@ case 'always'
 case 'never'
     needsQuote = false(size(table));
 otherwise
-    warning('EthoSerializeTable:unknownArgument', ...
+    warning('ETableSerialize:unknownArgument', ...
         'Unknown argument for QuoteMode, treating as ''always''.');
 end
 
@@ -46,7 +46,7 @@ case 'repeat'
 case {'backslash', '\'}
     quoteReplacePattern = '\\$0';
 otherwise
-    error('EthoSerializeTable:unknownArgument', ...
+    error('ETableSerialize:unknownArgument', ...
         'Unknown argument for QuoteEscapeMethod.');
 end
 
