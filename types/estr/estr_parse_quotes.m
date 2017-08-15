@@ -19,54 +19,36 @@ function blocks = estr_parse_quotes(text, varargin)
 %   'LineCommentPattern': regular expression
 %       Default is ''. A pattern to match as the start of a line-style comment.
 %   'OpenPatterns': cell array of regular expressions
-%       Each element in the array is a regular expression matching the opening
-%       of one type of quote block.
+%       Each element is a regular expression matching the opening of one type of
+%       quote block, and must have corresponding elements in ClosePatterns and
+%       EscapePatterns (even if those elements are empty '').
 %   'ClosePatterns': cell array of regular expressions
+%       Each element is a regular expression matching the closing of one type of
+%       quote block, and must have corresponding elements in OpenPatterns and
+%       EscapePatterns. The expression '\1' may be used to match the token
+%       matched by OpenPattern.
 %   'EscapePatterns': cell array of regular expressions
-
-%   'SingleQuote': {[true] | false}
-%   'DoubleQuote': {[true] | false}
-%       Whether single quotes ' or double quotes " should be used as quote
-%       marks, respectively.
-%   'BackslashEscapes': {[true] | false}
-%       Whether a backslash preceding a quote mark escapes it from closing the
-%       block.
-%   'ReduplicationEscapes': {[true] | false}
-%       Whether repeating a quote mark escapes it from closing the block.
-%   'LineCommentPattern': {[''] | regular expression}
-%       If not empty, identifies a line-comment-style "quote" block that begins
-%       with the supplied pattern and ends at the end of the line. E.g., '#' to
-%       cause everything following a # on a single line to be a comment block.
-%   'QuotePatterns': {Any ETable with fields 'Open', 'Close', and 'Escape'}
-%       Specify quote styles directly using regular expression patterns. Each
-%       row in the table corresponds to one type of quotation block, with the
-%       fields as follows:
-%         'Open': A regex pattern matching the opening of a quote block.
-%         'Close': A regex pattern matching the close of the quote block. Can
-%            use '\1' to match the string matched by the 'Open' pattern.
-%         'Escape': A regex pattern matching escaped close sequences in the
-%            block. E.g., '\\\1' matches a backslash followed by the quote.
-%       The other parameters are just shorthands for useful patterns in this
-%       table. Given the inputs for SingleQuote, DoubleQuote, BackslashEscapes,
-%       and ReduplicationEscapes, the QuotePatterns table is appended with a
-%       row as follows:
+%       Each element is a regular expression matching escape patterns for the
+%       closing of one type of quote block, and must have corresponding
+%       elements in OpenPatterns and ClosePatterns. The expression '\1' may be
+%       used to match the token matched by OpenPattern.
 %
-%         SQ  DQ  BE  RE  -->  Open      Close    Escape
-%          t   t   t   t       '[''"]'   '\1'     '\\\1|\1\1'
-%          t   t   t   f       '[''"]'   '\1'     '\\\1'
-%          t   t   f   t       '[''"]'   '\1'     '\1\1'
-%          t   t   f   f       '[''"]'   '\1'     ''
-%          t   f   t   t       ''''      '\1'     '\\\1|\1\1'
-%          t   f   x   x       ''''      '\1'     (as above)
-%          f   t   t   t       '"'       '\1'     '\\\1|\1\1'
-%          f   t   x   x       '"'       '\1'     (as above)
-%          f   f   x   x       (no additional row is appended)
+% The 'StandardFlags' and 'LineCommentPattern' options are just shorthands for
+% some of the more common quote patterns. The correspondence is as follows:
+%   'StandardFlags':
+%       s&d         -->   OpenPatterns: '[''"]'
+%       s           -->   OpenPatterns: ''''
+%       d           -->   OpenPatterns: '"'
+%       s|d         -->   ClosePatterns: '\1'
+%       (s|d)&b&r   -->   EscapePatterns: '\1\1|\\\1'
+%       (s|d)&b     -->   EscapePatterns: '\\\1'
+%       (s|d)&r     -->   EscapePatterns: '\1\1'
+%   'LineCommentPattern':
+%       '#' --> OpenPatterns: '#', ClosePatterns: '\n|$', EscapePatterns: ''
 %
-%       Additionally, if LineCommentPattern is not empty, the QuotePatterns
-%       table is appended with a row as follows:
-%
-%         Open          Close    Escape
-%         (LCP value)   '\n|$'   ''
+% If 'StandardFlags' is set and contains s or d, or if 'LineCommentPattern' is
+% set and nonempty, then entries for the resultant patterns will be appended
+% to 'OpenPatterns', 'ClosePatterns', and 'EscapePatterns'.
 
 pars = etho_simple_argparser({
     'OpenPatterns',   {};
