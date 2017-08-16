@@ -36,7 +36,7 @@ function [table, fields] = ETableParse(s, varargin)
 %   'MissingValues':
 
 
-pars = etho_simple_argparser({
+pars = etho_parse_args({
     'FieldNameRow', true;
     'SkipLines', 0;
     'FieldDelimiter', ',\s*|\s+';

@@ -1,17 +1,17 @@
 function s = ETableSerialize(table, varargin)
 
-pars = etho_simple_argparser({
-    'Quote', '''';
+pars = etho_parse_args({
+    'Style', 'none';
+    'Quote', '"';
     'QuoteMode', 'auto';
     'FieldDelimiter', '  ';
     'QuoteNeededPattern', '\s|[''",]';
     'QuoteEscapeMethod', 'repeat';
     'AlignColumns', true;
-    'TableFields', {};
     'FieldNameRow', true;
     }, varargin);
 
-[table, fields] = ETableConvert(table, pars, ...
+[table, names] = ETableConvert(table, pars, ...
     'TableTypeOut', 'cellarray');
 
 entryIsNumeric = cellfun(@(t)isnumeric(t)||islogical(t), table);
@@ -23,14 +23,15 @@ if ~iscellstr(table)
         'Unable to convert all data to string');
 end
 
-if pars.FieldNameRow && ~isempty(fields)
-    table = vertcat(fields(:)', table);
+if pars.FieldNameRow && ~isempty(names)
+    table = vertcat(names(:)', table);
 end
 
 % Determine which entries need to be quoted
 switch pars.QuoteMode
 case 'auto'
-    needsQuote = ~cellfun(@isempty, regexp(table, pars.QuoteNeededPattern));
+    needsQuote = cellfun(@isempty, table) ...
+        | ~cellfun(@isempty, regexp(table, pars.QuoteNeededPattern));
 case 'always'
     needsQuote = true(size(table));
 case 'never'

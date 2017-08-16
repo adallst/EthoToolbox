@@ -1,6 +1,6 @@
 function EthoSetParameters(paramset, newPars, newDocs, varargin)
 
-args = etho_simple_argparser({
+args = etho_parse_args({
     'Verbosity', 0;
     'Messenger', 'Etho';
     }, varargin);

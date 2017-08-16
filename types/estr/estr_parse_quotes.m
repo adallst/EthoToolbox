@@ -50,7 +50,7 @@ function blocks = estr_parse_quotes(text, varargin)
 % set and nonempty, then entries for the resultant patterns will be appended
 % to 'OpenPatterns', 'ClosePatterns', and 'EscapePatterns'.
 
-pars = etho_simple_argparser({
+pars = etho_parse_args({
     'OpenPatterns',   {};
     'ClosePatterns',  {};
     'EscapePatterns', {};
