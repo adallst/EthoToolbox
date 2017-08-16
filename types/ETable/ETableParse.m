@@ -40,8 +40,10 @@ pars = etho_simple_argparser({
     'FieldNameRow', true;
     'SkipLines', 0;
     'FieldDelimiter', ',\s*|\s+';
-    'Quote', '[''"]';
-    'EscapeDoubleQuote', true;
+    'QuoteStyle', 'sdrb';
+    'LineComments', '#'
+    %'Quote', '[''"]';
+    %'EscapeDoubleQuote', true;
     'TableTypeOut', 'struct';
     'FieldTypes', 'auto';
     'MissingValues', {'NA'};

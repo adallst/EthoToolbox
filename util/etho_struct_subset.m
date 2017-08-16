@@ -28,7 +28,7 @@ end
 
 newData = etho_ndim_slice(origData, fieldIndex);
 
-so = cell2struct(
+so = cell2struct(newData, newNames);
 
-so = rmfield(si, setdiff(fieldnames(si), names));
-so = orderfields(so, names);
+% so = rmfield(si, setdiff(fieldnames(si), names));
+% so = orderfields(so, names);
