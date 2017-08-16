@@ -1,7 +1,7 @@
-function pars = etho_simple_argparser(defaults, args)
+function pars = etho_parse_args(defaults, args)
 % Simplified argument parsing for parameter-value pairs
 % Usage:
-%   pars = etho_simple_argparser(defaults, args)
+%   pars = etho_parse_args(defaults, args)
 %     `defaults`
 %         A set of parameter-value default pairs. Can be supplied either as a
 %         scalar struct, as in:
@@ -30,6 +30,14 @@ defaults = defaults(:);
 defaultParameters = defaults(1:2:end);
 defaultValues = defaults(2:2:end);
 
+isChildParameter = strncmp(defaultParameters, '>', 1);
+childParameters = cellfun(@(s)s(2:end), ...
+    defaultParameters(isChildParameter), ...
+    'UniformOutput', false);
+parameterParents = defaultValues(isChildParameter);
+defaultParameters = defaultParameters(~isChildParameter);
+defaultValues = defaultValues(~isChildParameter);
+
 args = expandFlagArguments(args);
 
 % Workaround Octave not implementing inputParser.StructExpand
@@ -55,6 +63,11 @@ all_args = vertcat(struct2cell(results), struct2cell(unmatched));
 all_names = vertcat(result_names, unmatched_names);
 
 pars = cell2struct(all_args, all_names);
+
+child_not_set = ~ismember(childParameters, all_names);
+for i=find(child_not_set)
+    pars.(childParameters{i}) = pars.(parameterParents{i});
+end
 
 function args = expandFlagArguments(args)
 i = 1;
