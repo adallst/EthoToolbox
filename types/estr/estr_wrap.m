@@ -1,4 +1,4 @@
-function wrapped = etho_wordwrap(text, width, as_lines)
+function wrapped = estr_wrap(text, width, as_lines)
 
 if ~exist('as_lines', 'var')
     as_lines = false;

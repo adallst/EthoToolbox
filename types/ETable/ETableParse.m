@@ -117,7 +117,10 @@ end
 
 function vals = parse_row(text, pars)
 
-[quoted, nonquoted] = extract_quoted_text(text, pars);
+blocks = estr_parse_quotes(text, ...
+    'StandardFlags', pars.QuoteStyle, ...
+    'LineCommentPattern', pars.LineComments);
+%[quoted, nonquoted] = extract_quoted_text(text, pars);
 
 if numel(quoted) < numel(nonquoted)
     quoted(end+1) = {''};

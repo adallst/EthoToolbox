@@ -108,9 +108,22 @@ end
 table = struct2cell(table);
 
 function [table, names] = columns_to_cellarray(table, names)
+nrows = zeros(1, numel(table));
 for i=1:numel(table)
-    if ~iscell(table{i})
-        table{i} = num2cell(table{i});
+    if ischar(table{i})
+        table{i} = cellstr(table{i});
+    elseif ~(iscell(table{i}) && iscolumn(table{i}))
+        table{i} = num2cell(table{i}, 2:ndims(table{i}));
+    end
+    nrows(i) = size(table{i},1);
+end
+if any(nrows~=nrows(1))
+    warning('ETableConvert:nonUniformRows', ...
+        ['Not all table columns are the same length. Short columns will ', ...
+        'be padded to fit the longest column.']);
+    max_nrows = max(nrows);
+    for i=1:numel(table)
+        table{i}((end+1):max_nrows,1) = {[]};
     end
 end
 table = horzcat(table{:});
