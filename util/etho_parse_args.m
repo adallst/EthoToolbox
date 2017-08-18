@@ -64,7 +64,7 @@ all_names = vertcat(result_names, unmatched_names);
 
 pars = cell2struct(all_args, all_names);
 
-child_not_set = ~ismember(childParameters, all_names);
+child_not_set = ~ismember(childParameters, all_names)';
 for i=find(child_not_set)
     pars.(childParameters{i}) = pars.(parameterParents{i});
 end

@@ -29,7 +29,7 @@ names = pars.TableNamesIn;
 if isstruct(table) && isscalar(table)
     type = 'struct';
     names = fieldnames(table);
-    nrows = size(table.(fields{1}), 1);
+    nrows = size(table.(names{1}), 1);
 elseif isstruct(table)
     type = 'structarray';
     names = fieldnames(table);
