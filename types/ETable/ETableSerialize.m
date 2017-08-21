@@ -49,6 +49,7 @@ pars = etho_parse_args({
     'QuoteEscapeMethod', 'repeat';
     'AlignColumns', true;
     'PrintHeader', true;
+    'ColumnWidth', [];
     }, varargin);
 
 switch pars.Style
@@ -126,8 +127,15 @@ table(needsQuote) = strcat( ...
     pars.Quote );
 
 if pars.AlignColumns
-    fieldWidths = cellfun(@length, table);
-    columnWidths = max(fieldWidths, [], 1);
+    if isempty(pars.ColumnWidth)
+        fieldWidths = cellfun(@length, table);
+        columnWidths = max(fieldWidths, [], 1);
+    elseif isscalar(pars.ColumnWidth)
+        columnWidths = repmat(pars.ColumnWidth, 1, size(table,2));
+    else
+        columnWidths = zeros(1, size(table,2));
+        columnWidths(1:numel(pars.ColumnWidth)) = pars.ColumnWidth;
+    end
     columnFormats = strcat('%-', strsplit(int2str(columnWidths)), 's');
 else
     columnFormats = repmat({'%s'}, 1, size(table,2));

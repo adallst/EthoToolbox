@@ -38,7 +38,7 @@ parameterParents = defaultValues(isChildParameter);
 defaultParameters = defaultParameters(~isChildParameter);
 defaultValues = defaultValues(~isChildParameter);
 
-args = expandFlagArguments(args);
+args = expandFlagArguments(args(:)');
 
 % Workaround Octave not implementing inputParser.StructExpand
 verInfo = ver;
@@ -75,10 +75,10 @@ while i <= numel(args)
     if ischar(args{i})
         if args{i}(1) == '-'
             args{i} = args{i}(2:end);
-            args = [args(1:i); {true}; args(i+1:end)];
+            args = [args(1:i), {true}, args(i+1:end)];
         elseif args{i}(1) == '~'
             args{i} = args{i}(2:end);
-            args = [args(1:i); {false}; args(i+1:end)];
+            args = [args(1:i), {false}, args(i+1:end)];
         end
         i = i+2;
     else

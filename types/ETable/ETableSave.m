@@ -1,12 +1,5 @@
-function ETableSave(table, filename, varargin)
+function ETableSave(table, file, varargin)
 
 text = ETableSerialize(table, varargin{:});
 
-fid = fopen(filename, 'w');
-try
-    fwrite(fid, text);
-    fclose(fid);
-catch e
-    fclose(fid);
-    rethrow(e);
-end
+etho_filewrite(file, text);
