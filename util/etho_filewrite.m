@@ -36,7 +36,7 @@ elseif ischar(file)
     % File path, safely open and write
     fid = fopen(file, fopen_args{:});
     try
-        count = fwrite(fid, fwrite_args{:});
+        count = fwrite(fid, data, fwrite_args{:});
         fclose(fid);
     catch e
         fclose(fid);

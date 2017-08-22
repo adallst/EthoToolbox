@@ -1,4 +1,4 @@
-function [table, names] = ETableConvert(table, varargin)
+function [table, names, orig_type] = ETableConvert(table, varargin)
 % ETableConvert   Convert from one tabular structure to another
 % Usage:
 %   [table, names] = ETableConvert(table, ['Parameter', value, ...])
@@ -59,7 +59,7 @@ type_out = lower(pars.TableTypeOut);
 names_in = cellstr(pars.TableNamesIn);
 names_out = cellstr(pars.TableNamesOut);
 
-[auto_type, auto_names] = ETableAutoType(table, pars);
+[orig_type, orig_names] = ETableAutoType(table, pars);
 
 if ~ismember(type_in, all_table_types)
     if ~ismember(type_in, {'auto',''})
@@ -67,7 +67,7 @@ if ~ismember(type_in, all_table_types)
             'Unknown ''TableTypeIn'' value ''%s'', treating as ''auto''', ...
             type_in);
     end
-    type_in = auto_type;
+    type_in = orig_type;
 end
 if ~ismember(type_out, all_table_types)
     if ismember(type_out, {'auto', ''})
@@ -78,15 +78,15 @@ if ~ismember(type_out, all_table_types)
     end
 end
 if isempty(names_in)
-    names_in = auto_names;
-elseif ismember(type_in, {'struct', 'structarray'})
+    names_in = orig_names;
+elseif ismember(orig_type, {'struct', 'structarray'})
     table = etho_struct_subset(table, names_in);
 end
 if isempty(names_out)
     names_out = names_in;
 end
 
-[~, type_in_idx] = ismember(type_in, all_table_types);
+[~, type_in_idx] = ismember(orig_type, all_table_types);
 [~, type_out_idx] = ismember(type_out, all_table_types);
 
 % Select the conversion function from the matrix below.

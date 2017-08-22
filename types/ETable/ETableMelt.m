@@ -1,4 +1,5 @@
-function long = ETableMelt(wide, key, var_name, val_name, missing_func)
+function [long, long_names] = ETableMelt(wide, key, var_name, val_name, ...
+                                         missing_func)
 % Convert a wide-form table to a long-form table
 
 if ~exist('key', 'var') || isempty(key)

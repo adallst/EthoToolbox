@@ -23,33 +23,68 @@ function [type, names, nrows] = ETableAutoType(table, varargin)
 pars = etho_parse_args({
     'TableNames', {};
     '>TableNamesIn', 'TableNames';
+    'TableType', 'auto';
+    '>TableTypeIn', 'TableType';
     }, varargin);
 names = pars.TableNamesIn;
+type_hint = pars.TableTypeIn;
 
-if isstruct(table) && isscalar(table)
-    type = 'struct';
+% Infer the type from the Matlab type/structure, then use the input type as a
+% hint to resolve ambiguities.
+
+switch class(table)
+case 'struct'
+    if strcmp(type_hint, 'structarray') ...
+            || ( strcmp(type_hint, 'struct') && isscalar(table) )
+        type = type_hint;
+    else
+        if isscalar(table)
+            type = 'struct';
+        else
+            type = 'structarray';
+        end
+    end
+case 'cell'
+    if ( strcmp(type_hint, 'columns') && isvector(table) ) ...
+            || ( strcmp(type_hint, 'cellarray') && ismatrix(table) )
+        type = type_hint;
+    else
+        if isvector(table)
+            type = 'columns';
+        elseif ismatrix(table)
+            type = 'cellarray';
+        else
+            type = 'none';
+        end
+    end
+otherwise
+    type = 'none';
+end
+
+if nargout <= 1
+    return;
+end
+
+switch type
+case 'struct'
     names = fieldnames(table);
     nrows = size(table.(names{1}), 1);
-elseif isstruct(table)
-    type = 'structarray';
+case 'structarray'
     names = fieldnames(table);
     nrows = numel(table);
-elseif iscell(table) && isvector(table)
-    type = 'columns';
+case 'columns'
     if isempty(names)
         ncols = numel(table);
         names = strcat('var', strsplit(num2str(1:ncols)));
     end
     nrows = size(table{1}, 1);
-elseif iscell(table) && ismatrix(table)
-    type = 'cellarray';
+case 'cellarray'
     if isempty(names)
         ncols = size(table, 2);
         names = strcat('var', strsplit(num2str(1:ncols)));
     end
     nrows = size(table, 1);
-else
-    type = 'none';
+case 'none'
     names = {};
     nrows = 0;
 end
