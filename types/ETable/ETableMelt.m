@@ -17,7 +17,7 @@ if ~exist('missing_func', 'var') || isempty(missing_func)
     missing_func = @isempty;
 end
 
-[table, names] = ETableConvert(wide, 'TableTypeOut', 'cellarray');
+[table, names, orig_type] = ETableConvert(wide, 'TableTypeOut', 'cellarray');
 
 if ~all(ismember(key, names))
     error('ETable:noSuchKey', 'Invalid key');
@@ -42,3 +42,6 @@ key_part = table(key_ind_out(:), is_key);
 
 long = [key_part, variables, values];
 long_names = [names(is_key), var_name, val_name];
+
+[long, long_names] = ETableConvert(long, 'TableNames', long_names, ...
+    'TableTypeIn', orig_type);
