@@ -79,7 +79,7 @@ if useStandardStyle
     closePattern = '\1';
     standardEscapes = {'\\\1', '\1\1'};
     escapePattern = strjoin( ...
-        standardEscapes([backslashEscapes, reduplicationEscapes]),
+        standardEscapes([backslashEscapes, reduplicationEscapes]), ...
         '|' );
     patTable.open(end+1) = {openPattern};
     patTable.close(end+1) = {closePattern};
