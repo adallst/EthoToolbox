@@ -1,5 +1,9 @@
 function ETableSave(table, file, varargin)
 
-text = ETableSerialize(table, varargin{:});
+args = etho_parse_args({
+    'Mode', 'a';
+    }, varargin);
 
-etho_filewrite(file, text);
+text = ETableSerialize(table, args);
+
+etho_filewrite(file, text, args.Mode);

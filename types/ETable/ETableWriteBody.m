@@ -1,5 +1,9 @@
 function ETableWriteBody(table, file, varargin)
 
-text = ETableSerialize(table, varargin{:}, '~PrintHeader');
+args = etho_parse_args({
+    'Mode', 'a';
+    }, varargin);
 
-etho_filewrite(file, text);
+text = ETableSerialize(table, args, '~PrintHeader');
+
+etho_filewrite(file, text, args.Mode);
