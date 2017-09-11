@@ -42,8 +42,7 @@ pars = etho_parse_args({
     'FieldDelimiter', ',\s*|\s+';
     'QuoteStyle', 'sdrb';
     'LineComments', '#'
-    %'Quote', '[''"]';
-    %'EscapeDoubleQuote', true;
+    'IgnoreTrailingWhitespace', true;
     'TableTypeOut', 'struct';
     'FieldTypes', 'auto';
     'MissingValues', {'NA'};
@@ -88,7 +87,7 @@ if isscalar(fieldTypes)
 end
 for i=1:numFields
     if isempty(fieldTypes{i}) || strcmp(fieldTypes{i}, 'auto')
-        numeric_entry = str_is_number(columns{i});
+        numeric_entry = estr_is_number(columns{i});
         missing_entry = str_is_missing(columns{i}, pars);
 
         if all(numeric_entry | missing_entry)
@@ -99,7 +98,7 @@ for i=1:numFields
             fieldTypes{i} = 'text';
         end
     elseif strcmp(fieldTypes{i}, 'mixed')
-        numeric_entry = str_is_number(columns{i});
+        numeric_entry = estr_is_number(columns{i});
     end
     switch fieldTypes{i}
     case 'numeric'
@@ -112,75 +111,67 @@ for i=1:numFields
     end
 end
 
-[table, fields] = EthoReformatTable(columns, pars, ...
-    'FormatHint', 'columns', 'TableFields', fields);
+[table, fields] = ETableConvert(columns, pars, ...
+    'TableTypeIn', 'columns', 'TableNames', fields);
+
+
 
 function vals = parse_row(text, pars)
 
+if pars.IgnoreTrailingWhitespace
+    text = deblank(text);
+    line_comment_pattern = ['\s*(' pars.LineComments ')'];
+else
+    line_comment_pattern = pars.LineComments;
+end
+
+if isempty(text)
+    vals = {};
+    return;
+end
+
 blocks = estr_parse_quotes(text, ...
     'StandardFlags', pars.QuoteStyle, ...
-    'LineCommentPattern', pars.LineComments);
-%[quoted, nonquoted] = extract_quoted_text(text, pars);
+    'LineCommentPattern', line_comment_pattern);
 
-if numel(quoted) < numel(nonquoted)
-    quoted(end+1) = {''};
+% If the block ends with a line comment, discard that block.
+if ~isempty(regexp(blocks{end,1}, pars.LineComments))
+    blocks = blocks(1:end-1,:);
 end
 
-nondelims = regexp(nonquoted, pars.FieldDelimiter, 'split');
-for i=1:numel(nondelims)
-    if isempty(nondelims{i}{1})
-        % nonquoted section began with a field delimiter, remove the empty
-        % string.
-        nondelims{i} = nondelims{i}(2:end);
+num_blocks = size(blocks,1);
+row_parts = cell(1, num_blocks);
+
+for i=1:num_blocks
+    if isempty(blocks{i,1})
+        % This is an unquoted block, parse delimiters
+        tokens = regexp(blocks{i,2}, pars.FieldDelimiter, 'split');
+
+        % Every unquoted block except for the very first one on the line should
+        % begin with a delimiter separating it from the previous block,
+        % producing a spurious empty token. Likewise, each unquoted block should
+        % end with a delimiter except for the final one on the line.
+
+        if isempty(tokens{1}) && i~=1
+            % The block started with a delimiter, and this is not the first
+            % block, therefore the empty first token is an artifact of following
+            % a quoted block. Remove it.
+            tokens = tokens(2:end);
+        end
+        if isempty(tokens{end}) && i~=num_blocks
+            % The block ended with a delimiter, and this is not the final block,
+            % therefore the empty final token is an artifact of preceding a
+            % quoted block. Remove it.
+            tokens = tokens(1:end-1);
+        end
+        row_parts{i} = tokens;
+    else
+        % This is a quoted block, do not parse delimiters
+        row_parts{i} = {blocks{i,2}};
     end
-    % Join the subsequent quoted section to the last delimited item.
-    nondelims{i}{end} = strcat(nondelims{i}{end}, quoted{i});
-end
-%nondelims
-vals = horzcat(nondelims{:});
-%vals = vals(~cellfun(@isempty, vals));
-
-function [quoted, nonquoted] = extract_quoted_text(text, pars)
-% Given an input string text, return a cell array splitting up the text into
-% unquoted and quoted sections. parts(1:2:end) contains the unquoted sections,
-% and parts(2:2:end) contains the quoted sections.
-quote_pattern = pars.Quote;
-escape_pattern = '\\\1';
-if pars.EscapeDoubleQuote
-    escape_pattern = [escape_pattern '|\1\1'];
-    lookahead_pattern = '(?!\1)';
-else
-    lookahead_pattern = '';
 end
 
-pattern = sprintf('(%s)((?:%s|.)*?)\\1%s', ...
-    quote_pattern, escape_pattern, lookahead_pattern);
-
-[tokens, nonquoted] = regexp(text, pattern, 'tokens', 'split');
-tokens = vertcat(tokens{:});
-if isempty(tokens)
-    quoted = {};
-else
-    quotes = tokens(:,1);
-    re_quotes = regexptranslate('escape', quotes);
-    escaped_quotes = strcat('\\', re_quotes);
-    if pars.EscapeDoubleQuote
-        escaped_quotes = strcat(escaped_quotes, '|', re_quotes, re_quotes);
-    end
-    quoted = regexprep(tokens(:,2), escaped_quotes, quotes);
-end
-if isempty(nonquoted{end})
-    nonquoted = nonquoted(1:end-1);
-end
-
-function tf = str_is_number(s)
-standard = '[+-]?\d+[.,]?\d*(e[+-]?\d+)?';
-decimal = '[+-]?[.,]\d+(e[+-]?\d+)?';
-constants = '[+-]?inf|nan';
-pattern = strcat('^(', strjoin({standard, decimal, constants}, '|'), ')$');
-
-found = regexpi(s, pattern, 'once');
-tf = ~cellfun(@isempty, found);
+vals = horzcat(row_parts{:});
 
 function tf = str_is_missing(s, pars)
 

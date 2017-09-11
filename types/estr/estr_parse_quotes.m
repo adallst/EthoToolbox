@@ -79,7 +79,7 @@ if useStandardStyle
     closePattern = '\1';
     standardEscapes = {'\\\1', '\1\1'};
     escapePattern = strjoin( ...
-        standardEscapes([backslashEscapes, reduplicationEscapes]),
+        standardEscapes([backslashEscapes, reduplicationEscapes]), ...
         '|' );
     patTable.open(end+1) = {openPattern};
     patTable.close(end+1) = {closePattern};
@@ -143,7 +143,7 @@ for i = 1:numel(patTable.open)
 end
 
 pattern = strjoin(patterns, '|');
-[tokens, nonquoted] = regexp(text, pattern, 'tokens', 'split');
+[tokens, nonquoted] = regexp(text, pattern, 'dotall', 'tokens', 'split');
 % Now `tokens` is a cell array of cell arrays of strings, such that
 % tokens{i}{j} is the j'th token in the i'th match. I.e., for the i'th quoted
 % block of text, and the k'th quote pattern, tokens{i}((k*3-2):(k*3)) represents
