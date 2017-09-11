@@ -58,9 +58,37 @@ However, during data acquisition, it is often more natural to consider data orga
 Terminology
 -----------
 
-* data element
-* data group
-* dataset
+* Dataset
+    * A collection of observations associated with a project
+* Data group, table
+    * A collection of observations of the same type
+* Record
+    * A tuple (or list of items) representing a single observation
+* Metadata
+    * Information describing the structure and nature of the dataset.
 
 Approach
 --------
+
+Files containing the records and metadata for a dataset are organized in a project directory and its subdirectories.
+
+### Tabular data groups
+
+A data group can be represented as a single table of records, with no children. In this case, it is stored as a single file, named `<GroupName>.<format>`. Valid formats are:
+
+* `csv`
+    * Entries are separated by commas, `,`, and may optionally be enclosed by single `'` or double `"` quotes. A column name header row must be included.
+* `csv2`
+    * As `csv`, but entries are separated by semicolons `;`. This format is frequently used in language environments where commas are used as the decimal separator.
+* `tsv`
+    * As `csv`, but entries are separated by tab characters.
+* `wsv`
+    * As `csv`, but entries are separated by one or more whitespace characters.
+* `table`
+    * As `csv`, but entries are separated by a comma, semicolon, or whitespace character, followed by zero or more whitespace characters.
+* `json`
+    * A JSON-formatted file containing an array of objects, each representing one record.
+* `yaml`, `yml`
+    * A YAML-formatted file containing an array of mappings, each representing one record.
+
+### Hierarchical data groups
