@@ -104,7 +104,7 @@ for i = 1:numel(patTable.open)
     % '\1', '\4', '\7', etc.
     openTokenMetaPattern = '(^|(\\\\)+|[^\\])\\1';
     openTokenNumber = 3*i - 2;
-    openTokenMetaReplacement = sprintf('$1\\%d', openTokenNumber);
+    openTokenMetaReplacement = sprintf('$1\\\\%d', openTokenNumber);
 
     closePattern = regexprep(closePattern, ...
         openTokenMetaPattern, openTokenMetaReplacement);
