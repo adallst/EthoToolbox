@@ -92,3 +92,38 @@ A data group can be represented as a single table of records, with no children. 
     * A YAML-formatted file containing an array of mappings, each representing one record.
 
 ### Hierarchical data groups
+
+A data group can also be represented as a set of records, each of which can have one or more children which inherit values from the parent. In this case, the data group is represented by a set of files in a directory tree.
+
+For an illustrative example, consider a data group of subjects, each of which provides data for one or more sessions, each of which is a simple record. Such a group could be represented with the following directory tree:
+
+* `subjects/`
+    * `subj-1a7/`
+        * `subj-1a7.record.table`
+            ```
+            SubjectID  Age  EducationLevel
+            1a7        28   College
+            ```
+        * `sessions.table`
+            ```
+            Date        StartTime  Task
+            2017-07-08  13:00      Stroop
+            2017-07-12  11:20      "Wisconsin card sort"
+            ```
+    * `subj-3b8/`
+        * `subj-3b8.record.table`
+            ```
+            SubjectID  Age  EducationLevel
+            3b8        19   "Some college"
+            ```
+        * `sessions.table`
+            ```
+            Date        StartTime  Task
+            2017-06-28  13:45      Stroop
+            ```
+    * `subj-2c1/`
+        * `subj-2c1.record.table`
+            ```
+            SubjectID  Age  EducationLevel
+            2c1        32   Postgraduate
+            ```
