@@ -56,7 +56,17 @@ pars = etho_parse_args({
 all_table_types = {'struct', 'columns', 'cellarray'};
 type_in = lower(pars.TableTypeIn);
 type_out = lower(pars.TableTypeOut);
+for i = 1:length(pars.TableNamesIn)
+    if isempty(pars.TableNamesIn{i})
+        pars.TableNamesIn{i} = ['Field' num2str(i)];
+    end
+end
 names_in = cellstr(pars.TableNamesIn);
+for i = 1:length(pars.TableNamesOut)
+    if isempty(pars.TableNamesOut{i})
+        pars.TableNamesOut{i} = ['Field' num2str(i)];
+    end
+end
 names_out = cellstr(pars.TableNamesOut);
 
 [orig_type, orig_names] = ETableAutoType(table, pars);
