@@ -40,11 +40,11 @@ defaultValues = defaultValues(~isChildParameter);
 
 args = expandFlagArguments(args(:)');
 
-% Workaround Octave not implementing inputParser.StructExpand
-verInfo = ver;
-if any(strcmp('Octave', {verInfo.Name}))
-    args = octaveArgFix(args);
-end
+% % Workaround Octave not implementing inputParser.StructExpand
+% verInfo = ver;
+% if any(strcmp('Octave', {verInfo.Name}))
+%     args = octaveArgFix(args);
+% end
 
 p = inputParser;
 p.KeepUnmatched = true;
